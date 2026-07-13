@@ -1,0 +1,15 @@
+%% CI
+
+flowchart TD
+  %% Workflow: CI (.github/workflows/ci.yml)
+  lint["lint · 1m 45s · ⚠4"]
+  setup["setup · 1m 7s · ⚠3"]
+  test["test · ×3 · 2m · ⚠6"]
+  build["build · 1m 53s · cache:1 · ⚠3"]
+  setup --> lint
+  lint --> build
+  test --> build
+  classDef critical stroke:#d33,stroke-width:3px;
+  class lint,setup,build critical;
+  classDef finding fill:#fff3cd,stroke:#e0a800;
+  class lint,setup,test,build finding;

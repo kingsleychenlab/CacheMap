@@ -1,0 +1,9 @@
+# CacheMap analyzes its own workflows in CI. See docs/CONFIG.md.
+version: 1
+
+history:
+  runs: 30
+
+thresholds:
+  minimum-estimated-savings-seconds: 20
+  fail-on: high

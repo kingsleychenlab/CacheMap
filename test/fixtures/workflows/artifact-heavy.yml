@@ -1,0 +1,33 @@
+name: Artifact Heavy
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: node-modules-cache
+          path: node_modules
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: full-workspace
+          path: .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs
+          path: logs
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: node-modules-cache
+      - run: npm run package

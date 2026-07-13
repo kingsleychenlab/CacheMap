@@ -1,0 +1,52 @@
+name: CacheMap
+description: Analyze GitHub Actions workflows and explain why CI is slow, with evidence-backed optimization findings.
+author: CacheMap contributors
+branding:
+  icon: activity
+  color: purple
+
+inputs:
+  workflow:
+    description: Restrict analysis to a single workflow file (path or name). Defaults to changed workflows on PRs, otherwise all.
+    required: false
+  runs:
+    description: Number of historical workflow runs to analyze (requires github-token and non-offline).
+    required: false
+    default: '30'
+  fail-on:
+    description: Fail the action when a finding reaches this severity (low, medium, high, critical).
+    required: false
+    default: high
+  github-token:
+    description: Token used for optional historical run/cache analysis. Not required for static analysis.
+    required: false
+    default: ${{ github.token }}
+  offline:
+    description: Never contact the GitHub API; run static analysis only.
+    required: false
+    default: 'false'
+  config:
+    description: Path to a .cachemap.yml configuration file.
+    required: false
+  compare-base:
+    description: On pull requests, compare against the base branch and mark newly-introduced findings.
+    required: false
+    default: 'true'
+
+outputs:
+  findings-count:
+    description: Total number of findings across analyzed workflows.
+  new-findings-count:
+    description: Number of findings introduced by this pull request (when compare-base is enabled).
+  has-findings:
+    description: Whether at least one finding was produced (true or false).
+  threshold-exceeded:
+    description: Whether a finding reached the fail-on threshold (true or false).
+  json-report:
+    description: Path to the generated JSON report (workspace-relative).
+  sarif-report:
+    description: Path to the generated SARIF report (workspace-relative).
+
+runs:
+  using: node20
+  main: action/index.js

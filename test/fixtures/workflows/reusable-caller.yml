@@ -1,0 +1,26 @@
+name: Reusable Caller
+on:
+  push:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "prepare"
+
+  ci:
+    needs: prepare
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      node-version: 20
+    secrets: inherit
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./deploy.sh

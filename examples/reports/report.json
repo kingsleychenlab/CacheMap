@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "cachemap",
+    "version": "0.1.0"
+  },
+  "generatedAt": "2026-07-13T00:21:14.102Z",
+  "repo": null,
+  "offline": false,
+  "usedHistory": false,
+  "warnings": [],
+  "workflows": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "name": "CI",
+      "estimatedDurationSeconds": 285,
+      "durationConfidence": "inferred",
+      "potentialSavingsSeconds": 24,
+      "usedHistory": false,
+      "criticalPath": {
+        "path": [
+          "setup",
+          "lint",
+          "build"
+        ],
+        "totalSeconds": 285,
+        "confidence": "inferred",
+        "timingSource": "estimated",
+        "nonCriticalJobs": [
+          "test"
+        ]
+      },
+      "jobTimings": [
+        {
+          "jobId": "lint",
+          "seconds": 105,
+          "source": "estimated",
+          "confidence": "inferred",
+          "runsAnalyzed": 0
+        },
+        {
+          "jobId": "setup",
+          "seconds": 67,
+          "source": "estimated",
+          "confidence": "inferred",
+          "runsAnalyzed": 0
+        },
+        {
+          "jobId": "test",
+          "seconds": 120,
+          "source": "estimated",
+          "confidence": "inferred",
+          "runsAnalyzed": 0
+        },
+        {
+          "jobId": "build",
+          "seconds": 113,
+          "source": "estimated",
+          "confidence": "inferred",
+          "runsAnalyzed": 0
+        }
+      ],
+      "warnings": [],
+      "findings": [
+        {
+          "id": "repeated-dependency-install-1",
+          "rule": "repeated-dependency-install",
+          "kind": "performance",
+          "severity": "high",
+          "title": "node dependencies installed in 4 jobs",
+          "description": "The dependency-install command \"node:npm\" runs in 4 separate jobs. Without a shared dependency-preparation job or a cache reused across jobs, each job pays the full installation cost.",
+          "recommendation": "Create one dependency-preparation job (or reuse a dependency cache keyed by lockfile, OS, architecture, and runtime version) and have downstream jobs restore from it instead of installing from scratch.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "lint"
+            },
+            {
+              "label": "setup"
+            },
+            {
+              "label": "test"
+            },
+            {
+              "label": "build"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 15,
+            "column": 9
+          },
+          "savings": {
+            "minSeconds": 24,
+            "maxSeconds": 120,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Static estimate: 3 redundant install(s) × 8-40s per install (some jobs already cache dependencies). No historical timing available."
+          },
+          "jobs": [
+            "lint",
+            "setup",
+            "test",
+            "build"
+          ],
+          "details": {
+            "signature": "node:npm",
+            "ecosystem": "node",
+            "jobsWithCache": "1"
+          }
+        },
+        {
+          "id": "trigger-duplicate-push-pr-1",
+          "rule": "trigger-duplicate-push-pr",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "Push and pull_request triggers may double-run the workflow",
+          "description": "The workflow runs on both `push` and `pull_request`. For branches with an open pull request, both events fire, running the entire workflow twice for the same commit.",
+          "recommendation": "Restrict `push` to protected branches (e.g. `branches: [main]`) and rely on `pull_request` for feature branches, or add a concurrency group that cancels superseded runs.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "push",
+              "detail": "all branches"
+            },
+            {
+              "label": "pull_request",
+              "detail": "all branches"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml"
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 285,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Upper bound is one full duplicate run (~285s estimated) avoided per PR commit. Inferred."
+          }
+        },
+        {
+          "id": "trigger-missing-concurrency-1",
+          "rule": "trigger-missing-concurrency",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "No concurrency cancellation for superseded pull-request runs",
+          "description": "This pull-request workflow has no `concurrency` group with `cancel-in-progress: true`, so pushing new commits to a PR leaves outdated runs executing to completion alongside the new one.",
+          "recommendation": "Add:\nconcurrency:\n  group: ${{ github.workflow }}-${{ github.ref }}\n  cancel-in-progress: true\nso a new push cancels the in-progress run for the same ref.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "concurrency",
+              "detail": "not configured"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml"
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 285,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Upper bound is one full superseded run (~285s estimated) avoided per rapid push. Inferred."
+          }
+        },
+        {
+          "id": "unnecessary-serialization-1",
+          "rule": "unnecessary-serialization",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "Job `lint` may be serialized behind `setup` unnecessarily",
+          "description": "Job `lint` declares `needs: setup` but does not download any artifact from it, so the dependency may exist only to order execution. If `lint` does not actually consume `setup`'s results, the two could run in parallel.",
+          "recommendation": "Confirm whether `lint` requires `setup` to have completed. If not, remove the `needs` entry so both jobs start immediately. Do not remove it if `setup` produces state `lint` relies on.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "lint",
+              "detail": "needs: setup"
+            },
+            {
+              "label": "setup",
+              "detail": "no artifact consumed by dependent"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 10,
+            "column": 5
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 67,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Upper bound is the full duration of `setup` (~67s estimated) if the two ran in parallel. Only valid if the dependency is truly ordering-only. Inferred."
+          },
+          "jobs": [
+            "setup",
+            "lint"
+          ]
+        },
+        {
+          "id": "artifact-unused-1",
+          "rule": "artifact-unused",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "Artifact `coverage-results` is uploaded but never downloaded",
+          "description": "Job `test` uploads artifact `coverage-results`, but no job downloads it. Uploading an artifact that is never consumed wastes upload time and storage.",
+          "recommendation": "Remove the upload if the artifact is not needed downstream, or if it is only used for debugging, gate it behind a condition and a short retention period.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job test",
+              "detail": "uploads: coverage-results"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 40,
+            "column": 9
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 15,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Upper bound is the artifact upload time avoided; actual size is unknown without history. Inferred."
+          },
+          "jobs": [
+            "test"
+          ]
+        },
+        {
+          "id": "artifact-duplicate-name-1",
+          "rule": "artifact-duplicate-name",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "Matrix job `test` uploads a constant artifact name `coverage-results`",
+          "description": "Job `test` runs 3 matrix combinations but uploads artifact `coverage-results` with a fixed name. Since upload-artifact v4, duplicate names within a run fail or overwrite; either way the per-variant results collide.",
+          "recommendation": "Include a matrix value in the artifact name (e.g. `name: coverage-results-${{ matrix.os }}-${{ matrix.version }}`) so each variant produces a distinct artifact.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job test",
+              "detail": "3 variants upload `coverage-results`"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 26,
+            "column": 5
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 0,
+            "confidence": "unknown",
+            "source": "unknown",
+            "runsAnalyzed": 0,
+            "method": "This is a correctness/collision issue, not a direct time saving."
+          },
+          "jobs": [
+            "test"
+          ]
+        },
+        {
+          "id": "cache-key-quality-1",
+          "rule": "cache-key-quality",
+          "kind": "performance",
+          "severity": "medium",
+          "title": "Cache key in job `build` is likely to behave poorly",
+          "description": "Cache key analysis found 2 issue(s): the key hashes an overly broad glob (**/*), so unrelated file changes (docs, source) invalidate the cache on nearly every commit; the key hashes files that do not look like a lockfile, so it may not track the actual dependency set.",
+          "recommendation": "Consider a key such as:\n${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}\nAdjust the lockfile glob to your project. A poor key either serves stale caches or misses on nearly every run.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job build",
+              "detail": "key: ${{ runner.os }}-${{ hashFiles('**/*') }}"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 53,
+            "column": 9
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 0,
+            "confidence": "unknown",
+            "source": "unknown",
+            "runsAnalyzed": 0,
+            "method": "Impact depends on cache size and hit rate, which require historical data (run `cachemap history`)."
+          },
+          "jobs": [
+            "build"
+          ],
+          "details": {
+            "key": "${{ runner.os }}-${{ hashFiles('**/*') }}",
+            "broadGlobs": "**/*",
+            "suggestedKey": "${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}",
+            "issueCount": "2"
+          }
+        },
+        {
+          "id": "checkout-full-history-1",
+          "rule": "checkout-full-history",
+          "kind": "performance",
+          "severity": "low",
+          "title": "Job `test` fetches full git history unnecessarily",
+          "description": "`actions/checkout` uses `fetch-depth: 0` (full history) in job `test`, but no step in the job appears to use git history, tags, or merge-base information. Full history is slow to fetch on large repositories.",
+          "recommendation": "Remove `fetch-depth: 0` (the default shallow checkout is faster) unless a step needs full history, tags, or merge-base — in which case keep it.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job test",
+              "detail": "fetch-depth: 0"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 32,
+            "column": 9
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 30,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Upper bound is the extra fetch time on a large repository; small repos see little difference. Inferred."
+          },
+          "jobs": [
+            "test"
+          ]
+        },
+        {
+          "id": "expensive-before-validation-1",
+          "rule": "expensive-before-validation",
+          "kind": "performance",
+          "severity": "low",
+          "title": "Cheap validation runs after an expensive step in job `lint`",
+          "description": "In job `lint`, an expensive step (step 2) runs before a cheap validation step (step 3). If the cheap check often fails, running it first would fail the job sooner and save the expensive work.",
+          "recommendation": "Run fast checks (lint, format, typecheck) before expensive build/test steps so failures surface early.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job lint",
+              "detail": "expensive: step 2"
+            },
+            {
+              "label": "job lint",
+              "detail": "validation: step 3"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 16,
+            "column": 9
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 30,
+            "confidence": "inferred",
+            "source": "estimated",
+            "runsAnalyzed": 0,
+            "method": "Savings only apply on runs where the cheap check fails; magnitude depends on failure rate. Inferred."
+          },
+          "jobs": [
+            "lint"
+          ]
+        },
+        {
+          "id": "checkout-persist-credentials-1",
+          "rule": "checkout-persist-credentials",
+          "kind": "security",
+          "severity": "low",
+          "title": "Job `lint` persists checkout credentials",
+          "description": "`actions/checkout` persists the GitHub token in the local git config by default. Job `lint` does not appear to push back to the repository, so persisting credentials widens the token's exposure to later steps unnecessarily.",
+          "recommendation": "Set `persist-credentials: false` on `actions/checkout` in jobs that do not push to the repository.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job lint",
+              "detail": "persist-credentials not set (defaults to true)"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 13,
+            "column": 9
+          },
+          "jobs": [
+            "lint"
+          ]
+        },
+        {
+          "id": "checkout-persist-credentials-2",
+          "rule": "checkout-persist-credentials",
+          "kind": "security",
+          "severity": "low",
+          "title": "Job `setup` persists checkout credentials",
+          "description": "`actions/checkout` persists the GitHub token in the local git config by default. Job `setup` does not appear to push back to the repository, so persisting credentials widens the token's exposure to later steps unnecessarily.",
+          "recommendation": "Set `persist-credentials: false` on `actions/checkout` in jobs that do not push to the repository.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job setup",
+              "detail": "persist-credentials not set (defaults to true)"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 21,
+            "column": 9
+          },
+          "jobs": [
+            "setup"
+          ]
+        },
+        {
+          "id": "checkout-persist-credentials-3",
+          "rule": "checkout-persist-credentials",
+          "kind": "security",
+          "severity": "low",
+          "title": "Job `test` persists checkout credentials",
+          "description": "`actions/checkout` persists the GitHub token in the local git config by default. Job `test` does not appear to push back to the repository, so persisting credentials widens the token's exposure to later steps unnecessarily.",
+          "recommendation": "Set `persist-credentials: false` on `actions/checkout` in jobs that do not push to the repository.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job test",
+              "detail": "persist-credentials not set (defaults to true)"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 32,
+            "column": 9
+          },
+          "jobs": [
+            "test"
+          ]
+        },
+        {
+          "id": "checkout-persist-credentials-4",
+          "rule": "checkout-persist-credentials",
+          "kind": "security",
+          "severity": "low",
+          "title": "Job `build` persists checkout credentials",
+          "description": "`actions/checkout` persists the GitHub token in the local git config by default. Job `build` does not appear to push back to the repository, so persisting credentials widens the token's exposure to later steps unnecessarily.",
+          "recommendation": "Set `persist-credentials: false` on `actions/checkout` in jobs that do not push to the repository.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job build",
+              "detail": "persist-credentials not set (defaults to true)"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 49,
+            "column": 9
+          },
+          "jobs": [
+            "build"
+          ]
+        },
+        {
+          "id": "matrix-fail-fast-disabled-1",
+          "rule": "matrix-fail-fast-disabled",
+          "kind": "performance",
+          "severity": "low",
+          "title": "`fail-fast: false` in job `test`",
+          "description": "Job `test` disables fail-fast, so every matrix combination runs to completion even after one fails. This is useful for gathering full test results but increases compute usage on failing runs.",
+          "recommendation": "Keep `fail-fast: false` only if you rely on seeing every combination fail; otherwise remove it to cancel siblings once one fails.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "job test",
+              "detail": "strategy.fail-fast: false"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml",
+            "line": 26,
+            "column": 5
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 0,
+            "confidence": "unknown",
+            "source": "unknown",
+            "runsAnalyzed": 0,
+            "method": "Only matters on failing runs; time impact depends on failure frequency (needs history)."
+          },
+          "jobs": [
+            "test"
+          ]
+        },
+        {
+          "id": "trigger-missing-path-filter-1",
+          "rule": "trigger-missing-path-filter",
+          "kind": "performance",
+          "severity": "low",
+          "title": "Workflow runs on all changes with no path filter",
+          "description": "This workflow triggers on push/pull_request without `paths` or `paths-ignore` filters, so it runs even for documentation-only or unrelated changes.",
+          "recommendation": "Add `paths`/`paths-ignore` filters (or `paths-ignore: [ \"**.md\", \"docs/**\" ]`) so the workflow only runs when relevant files change. Keep required status checks in mind — filtered-out runs report as skipped.",
+          "workflow": ".github/workflows/ci.yml",
+          "evidence": [
+            {
+              "label": "on",
+              "detail": "push, pull_request"
+            }
+          ],
+          "location": {
+            "file": ".github/workflows/ci.yml"
+          },
+          "savings": {
+            "minSeconds": 0,
+            "maxSeconds": 0,
+            "confidence": "unknown",
+            "source": "unknown",
+            "runsAnalyzed": 0,
+            "method": "Savings depend on how many irrelevant changes trigger the workflow; needs history."
+          }
+        }
+      ]
+    }
+  ]
+}

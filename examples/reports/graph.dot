@@ -1,0 +1,11 @@
+digraph "CI" {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+  lint [label="lint · 1m 45s · ⚠4", color="#d33", penwidth=3, style="rounded,filled", fillcolor="#fff3cd"];
+  setup [label="setup · 1m 7s · ⚠3", color="#d33", penwidth=3, style="rounded,filled", fillcolor="#fff3cd"];
+  test [label="test · ×3 · 2m · ⚠6", style="rounded,filled", fillcolor="#fff3cd"];
+  build [label="build · 1m 53s · cache:1 · ⚠3", color="#d33", penwidth=3, style="rounded,filled", fillcolor="#fff3cd"];
+  setup -> lint [color="#d33", penwidth=2];
+  lint -> build [color="#d33", penwidth=2];
+  test -> build;
+}

@@ -1,0 +1,42 @@
+name: Monorepo
+on:
+  push:
+    paths:
+      - 'packages/**'
+      - 'package.json'
+  pull_request:
+    paths:
+      - 'packages/**'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        run: echo "web=true" >> "$GITHUB_OUTPUT"
+
+  web:
+    needs: changes
+    if: ${{ needs.changes.outputs.web == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace web
+
+  api:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace api

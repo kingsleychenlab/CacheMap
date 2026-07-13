@@ -1,0 +1,75 @@
+{
+  "name": "cachemap",
+  "version": "0.1.0",
+  "description": "Analyze GitHub Actions workflows to explain why CI is slow and recommend concrete optimizations.",
+  "keywords": [
+    "github-actions",
+    "ci",
+    "cache",
+    "performance",
+    "workflow",
+    "optimization",
+    "sarif"
+  ],
+  "license": "MIT",
+  "author": "CacheMap contributors",
+  "homepage": "https://github.com/kingsleychenlab/cachemap#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kingsleychenlab/cachemap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kingsleychenlab/cachemap/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "cachemap": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/bundle-action.mjs",
+    "build:cli": "tsc -p tsconfig.build.json",
+    "build:action": "node scripts/bundle-action.mjs",
+    "dev": "tsx src/cli.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@actions/artifact": "^2.3.2",
+    "@actions/core": "^1.11.1",
+    "@octokit/rest": "^21.1.1",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.7.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@types/node": "^20.17.30",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "esbuild": "^0.25.2",
+    "eslint": "^9.24.0",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  }
+}
