@@ -133,7 +133,3 @@ thresholds:
     fail-on: high
     github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
-
-## License
-
-[MIT](LICENSE)
