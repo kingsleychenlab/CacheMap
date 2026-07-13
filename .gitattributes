@@ -1,0 +1,9 @@
+# Force LF for all text files so Prettier's `endOfLine: lf` check passes on
+# Windows CI (where git's autocrlf would otherwise convert to CRLF on checkout).
+* text=auto eol=lf
+
+# Never touch binary assets.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

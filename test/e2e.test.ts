@@ -4,7 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 import { runEngine } from '../src/engine.js';
 import { renderTextReport } from '../src/reports/text.js';
 import { renderJsonReport } from '../src/reports/json.js';
@@ -142,29 +143,38 @@ describe('end-to-end', () => {
   it('runs through the compiled-source CLI and honours --fail-on exit codes', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const cli = join(here, '..', 'src', 'cli.ts');
-    const tsx = join(here, '..', 'node_modules', '.bin', 'tsx');
+    // Run the TypeScript CLI through node's own binary with the tsx loader,
+    // resolved to an absolute file URL. This is cross-platform (no reliance on
+    // the extensionless `.bin/tsx` shell script, which is not executable on
+    // Windows) and independent of the child's working directory.
+    const require = createRequire(import.meta.url);
+    const tsxLoader = pathToFileURL(require.resolve('tsx')).href;
     const env = { ...process.env, CACHEMAP_FORCE_CLI: '1', NO_COLOR: '1' };
 
     // fail-on critical → no critical finding → exit 0
-    const ok = runCli(tsx, cli, ['analyze', '--offline', '--fail-on', 'critical'], repo, env);
+    const ok = runCli(tsxLoader, cli, ['analyze', '--offline', '--fail-on', 'critical'], repo, env);
     expect(ok.status).toBe(0);
     expect(ok.stdout).toContain('CACHEMAP REPORT');
 
     // fail-on high → high finding present → exit 1
-    const fail = runCli(tsx, cli, ['analyze', '--offline', '--fail-on', 'high'], repo, env);
+    const fail = runCli(tsxLoader, cli, ['analyze', '--offline', '--fail-on', 'high'], repo, env);
     expect(fail.status).toBe(1);
   });
 });
 
 function runCli(
-  tsx: string,
+  tsxLoader: string,
   cli: string,
   args: string[],
   cwd: string,
   env: NodeJS.ProcessEnv,
 ): { status: number; stdout: string } {
   try {
-    const stdout = execFileSync(tsx, [cli, ...args], { cwd, env, encoding: 'utf8' });
+    const stdout = execFileSync(process.execPath, ['--import', tsxLoader, cli, ...args], {
+      cwd,
+      env,
+      encoding: 'utf8',
+    });
     return { status: 0, stdout };
   } catch (err) {
     const e = err as { status?: number; stdout?: Buffer | string };

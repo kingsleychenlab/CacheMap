@@ -9,6 +9,7 @@
 import { Command } from 'commander';
 import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { runEngine } from './engine.js';
 import type { EngineOptions } from './engine.js';
 import { VERSION, TOOL_NAME } from './version.js';
@@ -552,8 +553,10 @@ export function buildProgram(): Command {
   return program;
 }
 
-// Only parse argv when executed as the CLI entrypoint.
-const isMain = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+// Only parse argv when executed as the CLI entrypoint. Compare file URLs
+// (not a hand-built `file://` + path, which breaks on Windows drive paths).
+const isMain =
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain || process.env['CACHEMAP_FORCE_CLI'] === '1') {
   buildProgram()
     .parseAsync(process.argv)
